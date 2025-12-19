@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glossology - Premium Lipgloss</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="index.css?v=2025-12-19-fixed">
+</head>
+<body>
+  <!-- =====================================================
+       NAVIGATION BAR
+       ===================================================== -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="logo">GLOSSOLOGY</a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <ul class="nav-menu" id="navMenu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+      <div class="cart-icon" id="cartIcon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l1.05-4.2A2 2 0 0 1 8.93 3h6.14a2 2 0 0 1 1.88 1.8L18 9"></path>
+          <rect x="3" y="9" width="18" height="11" rx="2" ry="2"></rect>
+        </svg>
+        <span class="cart-count" id="cartCount">0</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- =====================================================
+       HERO SECTION - Home Page Only
+       ===================================================== -->
+  <section class="hero" id="home">
+    <div class="hero-content">
+      <h1>✨ Glossology ✨</h1>
+      <p>Premium Lip Gloss & Beauty Products</p>
+      <p style="font-size: 1rem; margin-bottom: 1.5rem;">Lip glosses • Lip oils • Lip balms • Body oil</p>
+      <a href="products.html" class="btn btn-primary">Shop Now</a>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       FEATURED SECTION - Quick Preview
+       ===================================================== -->
+  <section class="featured-section">
+    <div class="container">
+      <h2 class="section-title">Why Choose Glossology?</h2>
+      <div class="featured-grid">
+        <div class="featured-card">
+          <div class="featured-icon">✨</div>
+          <h3>Premium Quality</h3>
+          <p>High-quality formulas with nourishing ingredients for stunning shine</p>
+        </div>
+        <div class="featured-card">
+          <div class="featured-icon">🌿</div>
+          <h3>Natural & Vegan</h3>
+          <p>Cruelty-free & vegan products made with love</p>
+        </div>
+        <div class="featured-card">
+          <div class="featured-icon">💎</div>
+          <h3>Complete Beauty Line</h3>
+          <p>Lip glosses, oils, balms & body products for every complexion</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       FOOTER
+       ===================================================== -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h4>Follow Us</h4>
+        <div class="social-links-footer">
+          <a href="https://www.instagram.com/glossology__?igsh=MWxiNTMxZGZmamk4MA==" target="_blank" title="Instagram">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="https://www.tiktok.com/@glossology__?_r=1&_t=ZS-92FrWpFJeGP" target="_blank" title="TikTok">
+            <i class="fab fa-tiktok"></i>
+          </a>
+          <a href="https://www.facebook.com/share/1a2R5rhuH2/?mibextid=wwXIfr" target="_blank" title="Facebook">
+            <i class="fab fa-facebook"></i>
+          </a>
+          <a href="http://wa.me/2348024066085" target="_blank" title="WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="products.html">Shop</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Support</h4>
+        <ul class="footer-links">
+          <li><a href="contact.html#contactForm">Contact Form</a></li>
+          <li><a href="contact.html#faq">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-section">
+        <h4>Contact</h4>
+        <p class="footer-contact">
+          <strong>Email:</strong><br>
+          <a href="mailto:glossology001@gmail.com">glossology001@gmail.com</a>
+        </p>
+        <p class="footer-contact">
+          <strong>Phone:</strong><br>
+          <a href="tel:+2348024066085">+234 802 406 6085</a>
+        </p>
+        <p class="footer-contact">
+          <strong>WhatsApp:</strong><br>
+          <a href="http://wa.me/2348024066085" target="_blank">Message us</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Glossology. All rights reserved.</p>
+      <p class="footer-love">Handcrafted with 💗 for beauty lovers everywhere</p>
+    </div>
+  </footer>
+
+  <!-- =====================================================
+       MODALS (Cart & Checkout) - Do not edit
+       ===================================================== -->
+  <div class="modal" id="cartModal">
+    <div class="modal-content">
+      <span class="close" onclick="closeCart()">&times;</span>
+      <h2>Shopping Cart</h2>
+      <div class="cart-items" id="cartItems">
+        <!-- Cart items inserted by JavaScript -->
+      </div>
+      <div class="cart-summary">
+        <div class="cart-total">
+          <strong>Total:</strong>
+          <strong id="cartTotal">$0.00</strong>
+        </div>
+        <button class="btn btn-primary" onclick="proceedToCheckout()">Proceed to Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="checkoutModal">
+    <div class="modal-content checkout-modal">
+      <span class="close" onclick="closeCheckout()">&times;</span>
+      <h2>Checkout</h2>
+      
+      <div class="checkout-section">
+        <h3>Order Summary</h3>
+        <div class="order-summary" id="orderSummary">
+          <!-- Items inserted by JavaScript -->
+        </div>
+        <div class="order-total">
+          <strong>Total Amount:</strong>
+          <strong id="checkoutTotal">$0.00</strong>
+        </div>
+      </div>
+
+      <div class="checkout-section">
+        <h3>Payment Instructions</h3>
+        <div class="payment-instructions">
+          <p><strong>Send payment to:</strong></p>
+          <div class="account-details">
+            <p><strong>Bank Account:</strong> 6899892860</p>
+            <p><strong>Account Name:</strong> BASIRAT BISOLA SADIO</p>
+            <p><strong>Bank:</strong> MONIEPOINT MFB</p>
+            <p style="margin-top: 1rem; background: #fff0f6; padding: 0.8rem; border-radius: 6px;">
+              <strong>Your Reference Code:</strong> <span id="paymentRef" style="color: #ff4fa8; font-weight: 800;"></span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="checkout-section">
+        <h3>Complete Your Order</h3>
+        <form class="payment-form" id="paymentForm" enctype="multipart/form-data">
+          <input type="text" name="name" placeholder="Full Name" required>
+          <input type="email" name="email" placeholder="Email Address" required>
+          <input type="text" name="street" placeholder="Street Address" autocomplete="street-address" required>
+          <input type="text" name="city" placeholder="City" autocomplete="address-level2" required>
+          <input type="text" name="state" placeholder="State/Region" autocomplete="address-level1" required>
+          <input type="text" name="postalcode" placeholder="Postal Code" autocomplete="postal-code" required>
+          <input type="text" name="country" placeholder="Country" autocomplete="country-name" required>
+          <textarea name="productReferences" placeholder="Product Reference Codes" rows="2" readonly style="background: #f5f5f5; color: #333; cursor: not-allowed;" tabindex="-1"></textarea>
+          <label class="file-input-label">
+            <input type="file" name="paymentScreenshot" accept="image/*" required>
+            <span>📸 Upload Payment Screenshot</span>
+          </label>
+          <textarea name="paymentNotes" placeholder="Payment method details (e.g., 'Bank transfer sent from ABC account')" rows="3" required></textarea>
+          <button type="button" class="btn btn-primary" onclick="handlePaymentFormSubmit(event)">Submit Payment</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================
+       SCRIPTS - Do not edit
+       ===================================================== -->
+  <script src="index.js"></script>
+</body>
+</html>
