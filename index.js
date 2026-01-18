@@ -400,17 +400,11 @@ function handlePaymentFormSubmit(event) {
   // Get product details
   const productsList = document.querySelector('textarea[name="productReferences"]')?.value || 'Not specified';
   
-  // Get screenshot file
-  const screenshotFile = fileInput.files[0];
-  const screenshotFileName = screenshotFile?.name || 'Unknown file';
+  // Get screenshot filename
+  const screenshotFileName = fileInput.files[0]?.name || 'Unknown file';
   
-  // Convert file to base64 for attachment
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64String = e.target.result.split(',')[1]; // Get base64 part only
-    
-    // Format order details for business owner email
-    const orderDetailsForOwner = `
+  // Format order details for business owner email
+  const orderDetailsForOwner = `
 Customer Name: ${name}
 Email: ${email}
 Order ID: ${orderId}
@@ -428,80 +422,72 @@ TOTAL AMOUNT: ₦${total.toLocaleString()}
 PAYMENT METHOD:
 ${paymentMethod}
 
-PAYMENT SCREENSHOT: ${screenshotFileName} (see attachment)
+PAYMENT SCREENSHOT:
+${screenshotFileName}
 `;
 
-    // Email 1: Customer Confirmation
-    const customerEmailParams = {
-      order_id: orderId,
-      from_name: name,
-      customer_email: email,
-      address: address,
-      city: city,
-      state: state,
-      country: 'Nigeria',
-      payment_method: paymentMethod,
-      products: productsList,
-      payment_screenshot: screenshotFileName,
-      email: email  // Send to customer
-    };
-
-    // Email 2: Business Owner Notification (with attachment)
-    const ownerEmailParams = {
-      order_id: orderId,
-      from_name: name,
-      customer_email: email,
-      address: address,
-      city: city,
-      state: state,
-      country: 'Nigeria',
-      payment_method: paymentMethod,
-      products: productsList,
-      payment_screenshot: screenshotFileName,
-      email: 'glossology001@gmail.com',  // Send to business owner
-      order_details: orderDetailsForOwner,
-      attachment: {
-        filename: screenshotFileName,
-        data: base64String,
-        type: screenshotFile.type
-      }
-    };
-
-    console.log('Sending customer confirmation email...');
-    emailjs.send('default_service', 'template_p0romb1', customerEmailParams)
-      .then(response => {
-        console.log('✓ Customer confirmation email sent!', response);
-        
-        // After customer email succeeds, send owner notification with attachment
-        console.log('Sending business owner notification email with attachment...');
-        emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
-          .then(ownerResponse => {
-            console.log('✓ Owner notification email with attachment sent!', ownerResponse);
-            handlePaymentSuccess(paymentForm, name, email, total);
-          })
-          .catch(ownerError => {
-            console.error('Owner email error:', ownerError);
-            handlePaymentSuccess(paymentForm, name, email, total);
-          });
-      })
-      .catch(error => {
-        console.error('Customer email error:', error);
-        // Still try to send owner email even if customer email fails
-        console.log('Attempting to send owner notification...');
-        emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
-          .then(ownerResponse => {
-            console.log('✓ Owner notification email sent!', ownerResponse);
-            handlePaymentSuccess(paymentForm, name, email, total);
-          })
-          .catch(ownerError => {
-            console.error('Owner email also failed:', ownerError);
-            handlePaymentSuccess(paymentForm, name, email, total);
-          });
-      });
+  // Email 1: Customer Confirmation
+  const customerEmailParams = {
+    order_id: orderId,
+    from_name: name,
+    customer_email: email,
+    address: address,
+    city: city,
+    state: state,
+    country: 'Nigeria',
+    payment_method: paymentMethod,
+    products: productsList,
+    payment_screenshot: screenshotFileName,
+    email: email  // Send to customer
   };
-  
-  // Start reading the file
-  reader.readAsDataURL(screenshotFile);
+
+  // Email 2: Business Owner Notification
+  const ownerEmailParams = {
+    order_id: orderId,
+    from_name: name,
+    customer_email: email,
+    address: address,
+    city: city,
+    state: state,
+    country: 'Nigeria',
+    payment_method: paymentMethod,
+    products: productsList,
+    payment_screenshot: screenshotFileName,
+    email: 'glossology001@gmail.com',  // Send to business owner
+    order_details: orderDetailsForOwner
+  };
+
+  console.log('Sending customer confirmation email...');
+  emailjs.send('default_service', 'template_p0romb1', customerEmailParams)
+    .then(response => {
+      console.log('✓ Customer confirmation email sent!', response);
+      
+      // After customer email succeeds, send owner notification
+      console.log('Sending business owner notification email...');
+      emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
+        .then(ownerResponse => {
+          console.log('✓ Owner notification email sent!', ownerResponse);
+          handlePaymentSuccess(paymentForm, name, email, total);
+        })
+        .catch(ownerError => {
+          console.error('Owner email error:', ownerError);
+          handlePaymentSuccess(paymentForm, name, email, total);
+        });
+    })
+    .catch(error => {
+      console.error('Customer email error:', error);
+      // Still try to send owner email even if customer email fails
+      console.log('Attempting to send owner notification...');
+      emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
+        .then(ownerResponse => {
+          console.log('✓ Owner notification email sent!', ownerResponse);
+          handlePaymentSuccess(paymentForm, name, email, total);
+        })
+        .catch(ownerError => {
+          console.error('Owner email also failed:', ownerError);
+          handlePaymentSuccess(paymentForm, name, email, total);
+        });
+    });
 }
 
 // Handle contact form submission
@@ -557,10 +543,33 @@ function handleContactFormSubmit(event) {
 
   console.log('Contact form validation passed, submitting...');
   const name = `${firstname} ${lastname}`;
+  
+  const templateParams = {
+    order_id: 'CONTACT-' + Date.now(),
+    from_name: firstname + ' ' + lastname,
+    customer_email: email,
+    address: inquiryType,
+    city: 'Contact Inquiry',
+    state: inquiryType,
+    country: 'Nigeria',
+    products: message,
+    payment_method: phone,
+    email: email
+  };
 
-  console.log('Showing contact success message...');
-  showContactSuccess(firstname, email);
-  contactForm.reset();
+  console.log('Sending contact email via EmailJS...');
+  emailjs.send('default_service', 'template_p0romb1', templateParams)
+    .then(response => {
+      console.log('Contact email sent successfully!', response);
+      showContactSuccess(firstname, email);
+      contactForm.reset();
+    })
+    .catch(error => {
+      console.error('EmailJS error:', error);
+      alert('Message received! We\'ll respond shortly.');
+      showContactSuccess(firstname, email);
+      contactForm.reset();
+    });
 }
 
 function setupEventListeners() {
