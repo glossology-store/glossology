@@ -118,21 +118,21 @@
       <div class="checkout-section">
         <h3>Complete Your Order</h3>
         <form class="payment-form" id="paymentForm" enctype="multipart/form-data">
-          <input type="text" name="name" placeholder="Full Name (First Middle Last)" required pattern="[a-zA-Z\s'-]{2,}" minlength="2" maxlength="100">
-          <input type="email" name="email" placeholder="Email Address" required maxlength="254">
-          <textarea name="address" placeholder="Full Address" rows="3" required minlength="5" maxlength="200"></textarea>
-          <input type="text" name="city" placeholder="City" required minlength="2" maxlength="50">
-          <select name="state" id="paymentState" required style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+          <input type="text" name="name" placeholder="Full Name (First Middle Last)" minlength="2" maxlength="100">
+          <input type="email" name="email" placeholder="Email Address" maxlength="254">
+          <textarea name="address" placeholder="Full Address" rows="3" minlength="5" maxlength="200"></textarea>
+          <input type="text" name="city" placeholder="City" minlength="2" maxlength="50">
+          <select name="state" id="paymentState" style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px;">
             <option value="">-- Select State --</option>
           </select>
           <input type="hidden" name="country" value="Nigeria">
           
           <textarea name="productReferences" placeholder="Product Reference Codes" rows="2" readonly style="background: #f5f5f5; color: #333; cursor: not-allowed;" tabindex="-1"></textarea>
           <label class="file-input-label">
-            <input type="file" name="paymentScreenshot" accept="image/jpeg,image/png,image/gif,image/webp" required>
+            <input type="file" name="paymentScreenshot" accept="image/jpeg,image/png,image/gif,image/webp">
             <span>📸 Upload Payment Screenshot</span>
           </label>
-          <textarea name="paymentNotes" placeholder="Payment method details (e.g., 'Bank transfer sent from ABC account')" rows="3" required minlength="5" maxlength="500"></textarea>
+          <textarea name="paymentNotes" placeholder="Payment method details (optional)" rows="3" minlength="5" maxlength="500"></textarea>
           <button type="submit" class="btn btn-primary">Submit Payment</button>
         </form>
       </div>
@@ -184,7 +184,7 @@
         <h4>Contact</h4>
         <p class="footer-contact">
           <strong>Email:</strong><br>
-          <a href="mailto:woorimnor@via.tokyo.jp">woorimnor@via.tokyo.jp</a>
+          <a href="mailto:glossology001@gmail.com">glossology001@gmail.com</a>
         </p>
         <p class="footer-contact">
           <strong>Phone:</strong><br>
@@ -206,6 +206,7 @@
   <!-- =====================================================
        SCRIPTS
        ===================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script src="index.js"></script>
 
   <!-- Nigerian States and Cities Data -->

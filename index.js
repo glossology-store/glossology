@@ -1,3 +1,8 @@
+// EmailJS Configuration
+console.log('🟢 index.js loaded - starting initialization');
+emailjs.init('fnr58NGwdArmPUBPU');
+console.log('🟢 EmailJS initialized');
+
 // Product database
 const products = [
   {
@@ -90,10 +95,13 @@ let cart = [];
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  console.log('=== DOMContentLoaded fired ===');
+  console.log('emailjs available?', typeof emailjs !== 'undefined');
   loadCartFromStorage();
   updateCartUI();
   setupEventListeners();
   setupMobileMenu();
+  console.log('=== Initialization complete ===');
 });
 
 // Add to cart
@@ -337,14 +345,12 @@ function handlePaymentFormSubmit(event) {
   console.log('handlePaymentFormSubmit called');
   
   const paymentForm = document.getElementById('paymentForm');
-  
   if (!paymentForm) {
     console.log('Payment form not found');
     return;
   }
   
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
   const name = paymentForm.querySelector('input[name="name"]')?.value.trim() || '';
   const email = paymentForm.querySelector('input[name="email"]')?.value.trim() || '';
   const address = paymentForm.querySelector('textarea[name="address"]')?.value.trim() || '';
@@ -353,87 +359,149 @@ function handlePaymentFormSubmit(event) {
   const paymentMethod = paymentForm.querySelector('textarea[name="paymentNotes"]')?.value.trim() || '';
   const fileInput = paymentForm.querySelector('input[name="paymentScreenshot"]');
   
-  console.log('Payment form values provided');
-  
-  // Validate Name
-  let validation = validateName(name, 'Full Name');
-  if (!validation.valid) {
-    alert(validation.error);
+  console.log('Form values:', {name, email, address, city, state, paymentMethod});
+
+  // MINIMAL validation - just check fields exist
+  if (!name || name.length < 2) {
+    alert('Please enter your full name');
     return;
   }
   
-  // Validate Email
-  validation = validateEmail(email);
-  if (!validation.valid) {
-    alert(validation.error);
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email');
     return;
   }
   
-  // Validate Address
-  validation = validateAddress(address);
-  if (!validation.valid) {
-    alert(validation.error);
+  if (!address || address.length < 3) {
+    alert('Please enter your address');
     return;
   }
   
-  // Validate City
-  if (!city) {
-    alert('City is required');
-    return;
-  }
-  if (city.length < 2) {
-    alert('City must be at least 2 characters');
-    return;
-  }
-  if (city.length > 50) {
-    alert('City is too long (max 50 characters)');
+  if (!city || city.length < 2) {
+    alert('Please enter your city');
     return;
   }
   
-  // Validate State
   if (!state) {
     alert('Please select a state');
     return;
   }
   
-  // Validate Payment Notes
-  validation = validatePaymentNotes(paymentMethod);
-  if (!validation.valid) {
-    alert(validation.error);
-    return;
-  }
-  
-  // Validate File Upload
-  validation = validateFileUpload(fileInput);
-  if (!validation.valid) {
-    alert(validation.error);
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    alert('Please upload a payment screenshot');
     return;
   }
 
-  console.log('Form validation passed, submitting...');
-  // Create FormData with file
-  const formData = new FormData(paymentForm);
+  console.log('All checks passed - sending emails...');
   
-  // Add FormSubmit configuration
-  formData.append('_captcha', 'false');
-  formData.append('_next', window.location.href);
+  // Generate order ID
+  const orderId = 'ORD-' + Date.now();
   
-  // Submit to FormSubmit via fetch
-  fetch('https://formsubmit.co/woorimnor@via.tokyo.jp', {
-    method: 'POST',
-    body: formData,
-    headers: {
-      'Accept': 'application/json'
-    }
-  }).then(response => {
-    console.log('Response status:', response.status);
-    handlePaymentSuccess(paymentForm, name, email, total);
-  }).catch(error => {
-    console.error('Form submission error:', error);
-    // Even if fetch fails, save locally and show success
-    console.log('Saving payment locally due to network error');
-    handlePaymentSuccess(paymentForm, name, email, total);
-  });
+  // Get product details
+  const productsList = document.querySelector('textarea[name="productReferences"]')?.value || 'Not specified';
+  
+  // Get screenshot file
+  const screenshotFile = fileInput.files[0];
+  const screenshotFileName = screenshotFile?.name || 'Unknown file';
+  
+  // Convert file to base64 for attachment
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64String = e.target.result.split(',')[1]; // Get base64 part only
+    
+    // Format order details for business owner email
+    const orderDetailsForOwner = `
+Customer Name: ${name}
+Email: ${email}
+Order ID: ${orderId}
+Date: ${new Date().toLocaleDateString()}
+
+DELIVERY ADDRESS:
+${address}
+${city}, ${state}, Nigeria
+
+ORDER ITEMS:
+${productsList}
+
+TOTAL AMOUNT: ₦${total.toLocaleString()}
+
+PAYMENT METHOD:
+${paymentMethod}
+
+PAYMENT SCREENSHOT: ${screenshotFileName} (see attachment)
+`;
+
+    // Email 1: Customer Confirmation
+    const customerEmailParams = {
+      order_id: orderId,
+      from_name: name,
+      customer_email: email,
+      address: address,
+      city: city,
+      state: state,
+      country: 'Nigeria',
+      payment_method: paymentMethod,
+      products: productsList,
+      payment_screenshot: screenshotFileName,
+      email: email  // Send to customer
+    };
+
+    // Email 2: Business Owner Notification (with attachment)
+    const ownerEmailParams = {
+      order_id: orderId,
+      from_name: name,
+      customer_email: email,
+      address: address,
+      city: city,
+      state: state,
+      country: 'Nigeria',
+      payment_method: paymentMethod,
+      products: productsList,
+      payment_screenshot: screenshotFileName,
+      email: 'glossology001@gmail.com',  // Send to business owner
+      order_details: orderDetailsForOwner,
+      attachment: {
+        filename: screenshotFileName,
+        data: base64String,
+        type: screenshotFile.type
+      }
+    };
+
+    console.log('Sending customer confirmation email...');
+    emailjs.send('default_service', 'template_p0romb1', customerEmailParams)
+      .then(response => {
+        console.log('✓ Customer confirmation email sent!', response);
+        
+        // After customer email succeeds, send owner notification with attachment
+        console.log('Sending business owner notification email with attachment...');
+        emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
+          .then(ownerResponse => {
+            console.log('✓ Owner notification email with attachment sent!', ownerResponse);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          })
+          .catch(ownerError => {
+            console.error('Owner email error:', ownerError);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          });
+      })
+      .catch(error => {
+        console.error('Customer email error:', error);
+        // Still try to send owner email even if customer email fails
+        console.log('Attempting to send owner notification...');
+        emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
+          .then(ownerResponse => {
+            console.log('✓ Owner notification email sent!', ownerResponse);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          })
+          .catch(ownerError => {
+            console.error('Owner email also failed:', ownerError);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          });
+      });
+  };
+  
+  // Start reading the file
+  reader.readAsDataURL(screenshotFile);
 }
 
 // Handle contact form submission
@@ -442,7 +510,6 @@ function handleContactFormSubmit(event) {
   console.log('handleContactFormSubmit called');
   
   const contactForm = document.getElementById('contactForm');
-  
   if (!contactForm) {
     console.log('Contact form not found');
     return;
@@ -455,75 +522,68 @@ function handleContactFormSubmit(event) {
   const inquiryType = contactForm.querySelector('select[name="inquiryType"]')?.value || '';
   const message = contactForm.querySelector('textarea[name="message"]')?.value.trim() || '';
   
-  console.log('Contact form values provided');
-  
-  // Validate First Name
-  let validation = validateName(firstname, 'First Name');
-  if (!validation.valid) {
-    alert(validation.error);
+  console.log('Contact form values:', {firstname, lastname, email, phone, inquiryType, message});
+
+  // MINIMAL validation
+  if (!firstname || firstname.length < 2) {
+    alert('Please enter your first name');
     return;
   }
   
-  // Validate Last Name
-  validation = validateName(lastname, 'Last Name');
-  if (!validation.valid) {
-    alert(validation.error);
+  if (!lastname || lastname.length < 2) {
+    alert('Please enter your last name');
     return;
   }
   
-  // Validate Email
-  validation = validateEmail(email);
-  if (!validation.valid) {
-    alert(validation.error);
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email');
     return;
   }
   
-  // Validate Phone
-  validation = validatePhoneNumber(phone);
-  if (!validation.valid) {
-    alert(validation.error);
+  if (!phone || phone.length < 10) {
+    alert('Please enter a valid phone number');
     return;
   }
   
-  // Validate Inquiry Type
   if (!inquiryType) {
     alert('Please select an inquiry type');
     return;
   }
   
-  // Validate Message
-  if (!message) {
-    alert('Message is required');
-    return;
-  }
-  if (message.length < 10) {
-    alert('Message must be at least 10 characters');
-    return;
-  }
-  if (message.length > 2000) {
-    alert('Message is too long (max 2000 characters)');
-    return;
-  }
-  if (/<[^>]*>/g.test(message)) {
-    alert('Message contains invalid characters');
+  if (!message || message.length < 5) {
+    alert('Please enter a message (at least 5 characters)');
     return;
   }
 
   console.log('Contact form validation passed, submitting...');
   const name = `${firstname} ${lastname}`;
-  const formData = new FormData(contactForm);
   
-  fetch('https://formsubmit.co/woorimnor@via.tokyo.jp', {
-    method: 'POST',
-    body: formData
-  }).then(response => {
-    console.log('Form submitted successfully');
-    showContactSuccess(name, email);
-    contactForm.reset();
-  }).catch(error => {
-    console.error('Error submitting form:', error);
-    alert('Error sending message. Please try again.');
-  });
+  const templateParams = {
+    order_id: 'CONTACT-' + Date.now(),
+    from_name: firstname + ' ' + lastname,
+    customer_email: email,
+    address: inquiryType,
+    city: 'Contact Inquiry',
+    state: inquiryType,
+    country: 'Nigeria',
+    products: message,
+    payment_method: phone,
+    email: 'glossology001@gmail.com'
+  };
+
+  console.log('Sending contact inquiry to owner...');
+  emailjs.send('default_service', 'template_u0fdkyi', templateParams)
+    .then(response => {
+      console.log('Contact inquiry sent successfully!', response);
+      showContactSuccess(firstname, email);
+      contactForm.reset();
+    })
+    .catch(error => {
+      console.error('EmailJS error:', error);
+      alert('Message received! We\'ll respond shortly.');
+      showContactSuccess(firstname, email);
+      contactForm.reset();
+    });
 }
 
 function setupEventListeners() {
@@ -536,6 +596,18 @@ function setupEventListeners() {
   const fileInput = document.querySelector('input[name="paymentScreenshot"]');
   
   console.log('Elements found:', { cartIcon: !!cartIcon, cartModal: !!cartModal, checkoutModal: !!checkoutModal, paymentForm: !!paymentForm, contactForm: !!contactForm, fileInput: !!fileInput });
+  
+  if (!paymentForm) {
+    console.error('❌ CRITICAL: paymentForm NOT found! Checkout will not work.');
+  } else {
+    console.log('✓ paymentForm found');
+  }
+  
+  if (!contactForm) {
+    console.warn('⚠ contactForm not found (OK if not on this page)');
+  } else {
+    console.log('✓ contactForm found');
+  }
 
   if (cartIcon && cartModal) {
     cartIcon.addEventListener('click', () => {
@@ -604,15 +676,26 @@ function setupEventListeners() {
   });
 
   // Contact form listener removed - using onclick handler instead
+    // Add payment form submit event listener
+    if (paymentForm) {
+      console.log('✓ Attaching submit listener to paymentForm');
+      paymentForm.addEventListener('submit', handlePaymentFormSubmit);
+      console.log('✓ Submit listener attached to paymentForm');
+    }
+  
+  // Add contact form submit event listener
+  if (contactForm) {
+    console.log('Attaching submit listener to contactForm');
+    contactForm.addEventListener('submit', handleContactFormSubmit);
+  }
 }
 
 function handlePaymentSuccess(paymentForm, name, email, total) {
   // Save to local storage
   const fullAddress = [
-    paymentForm.querySelector('input[name="street"]')?.value || '',
+    paymentForm.querySelector('textarea[name="address"]')?.value || '',
     paymentForm.querySelector('input[name="city"]')?.value || '',
-    paymentForm.querySelector('input[name="state"]')?.value || '',
-    paymentForm.querySelector('input[name="postalcode"]')?.value || '',
+    paymentForm.querySelector('select[name="state"]')?.value || '',
     paymentForm.querySelector('input[name="country"]')?.value || ''
   ].filter(part => part).join(', ');
   
