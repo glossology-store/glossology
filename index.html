@@ -118,7 +118,7 @@
         <h4>Contact</h4>
         <p class="footer-contact">
           <strong>Email:</strong><br>
-          <a href="mailto:glossology001@gmail.com">glossology001@gmail.com</a>
+          <a href="mailto:woorimnor@via.tokyo.jp">woorimnor@via.tokyo.jp</a>
         </p>
         <p class="footer-contact">
           <strong>Phone:</strong><br>
@@ -157,10 +157,11 @@
     </div>
   </div>
 
+
   <div class="modal" id="checkoutModal">
     <div class="modal-content checkout-modal">
       <span class="close" onclick="closeCheckout()">&times;</span>
-      <h2>Checkout</h2>
+      <h2>Complete Your Order</h2>
       
       <div class="checkout-section">
         <h3>Order Summary</h3>
@@ -169,50 +170,99 @@
         </div>
         <div class="order-total">
           <strong>Total Amount:</strong>
-          <strong id="checkoutTotal">$0.00</strong>
+          <strong id="checkoutTotal">₦0.00</strong>
         </div>
       </div>
 
       <div class="checkout-section">
-        <h3>Payment Instructions</h3>
-        <div class="payment-instructions">
-          <p><strong>Send payment to:</strong></p>
-          <div class="account-details">
-            <p><strong>Bank Account:</strong> 6899892860</p>
-            <p><strong>Account Name:</strong> BASIRAT BISOLA SADIO</p>
-            <p><strong>Bank:</strong> MONIEPOINT MFB</p>
-            <p style="margin-top: 1rem; background: #fff0f6; padding: 0.8rem; border-radius: 6px;">
-              <strong>Your Reference Code:</strong> <span id="paymentRef" style="color: #ff4fa8; font-weight: 800;"></span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="checkout-section">
-        <h3>Complete Your Order</h3>
+        <h3>Your Details</h3>
         <form class="payment-form" id="paymentForm" enctype="multipart/form-data">
-          <input type="text" name="name" placeholder="Full Name" required>
-          <input type="email" name="email" placeholder="Email Address" required>
-          <input type="text" name="street" placeholder="Street Address" autocomplete="street-address" required>
-          <input type="text" name="city" placeholder="City" autocomplete="address-level2" required>
-          <input type="text" name="state" placeholder="State/Region" autocomplete="address-level1" required>
-          <input type="text" name="postalcode" placeholder="Postal Code" autocomplete="postal-code" required>
-          <input type="text" name="country" placeholder="Country" autocomplete="country-name" required>
+          <input type="text" name="name" placeholder="Full Name (First Middle Last)" required pattern="[a-zA-Z\s'-]{2,}" minlength="2" maxlength="100">
+          <input type="email" name="email" placeholder="Email Address" required maxlength="254">
+          <textarea name="address" placeholder="Full Address" rows="3" required minlength="5" maxlength="200"></textarea>
+          <input type="text" name="city" placeholder="City" required minlength="2" maxlength="50">
+          <select name="state" id="paymentState" required style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+            <option value="">-- Select State --</option>
+          </select>
+          <input type="hidden" name="country" value="Nigeria">
+          
           <textarea name="productReferences" placeholder="Product Reference Codes" rows="2" readonly style="background: #f5f5f5; color: #333; cursor: not-allowed;" tabindex="-1"></textarea>
           <label class="file-input-label">
-            <input type="file" name="paymentScreenshot" accept="image/*" required>
+            <input type="file" name="paymentScreenshot" accept="image/jpeg,image/png,image/gif,image/webp" required>
             <span>📸 Upload Payment Screenshot</span>
           </label>
-          <textarea name="paymentNotes" placeholder="Payment method details (e.g., 'Bank transfer sent from ABC account')" rows="3" required></textarea>
-          <button type="button" class="btn btn-primary" onclick="handlePaymentFormSubmit(event)">Submit Payment</button>
+          <textarea name="paymentNotes" placeholder="Payment method details (e.g., 'Bank transfer sent from ABC account')" rows="3" required minlength="5" maxlength="500"></textarea>
+          <button type="submit" class="btn btn-primary">Submit Payment</button>
         </form>
       </div>
     </div>
   </div>
 
   <!-- =====================================================
-       SCRIPTS - Do not edit
+       SCRIPTS
        ===================================================== -->
   <script src="index.js"></script>
+
+  <!-- Nigerian States and Cities Data -->
+  <script>
+    const nigerianStatesAndCities = {
+      'Abia': ['Aba', 'Onitsha', 'Umuahia', 'Uturu'],
+      'Adamawa': ['Yola', 'Girei', 'Mubi', 'Maiduguri'],
+      'Akwa Ibom': ['Uyo', 'Ikot Ekpene', 'Abak', 'Eket'],
+      'Anambra': ['Awka', 'Onitsha', 'Nnewi', 'Agulu'],
+      'Bauchi': ['Bauchi', 'Azare', 'Giade', 'Jababu'],
+      'Bayelsa': ['Yenagoa', 'Brass', 'Sagbama', 'Nembe'],
+      'Benue': ['Makurdi', 'Gboko', 'Otukpo', 'Katsina-Ala'],
+      'Borno': ['Maiduguri', 'Biu', 'Dikwa', 'Potiskum'],
+      'Cross River': ['Calabar', 'Buea', 'Ogoja', 'Ikom'],
+      'Delta': ['Asaba', 'Warri', 'Sapele', 'Agbor'],
+      'Ebonyi': ['Abakaliki', 'Onueke', 'Afikpo', 'Onicha'],
+      'Edo': ['Benin City', 'Auchi', 'Fugar', 'Jattu'],
+      'Ekiti': ['Ado-Ekiti', 'Ikere', 'Ijero', 'Ikole'],
+      'Enugu': ['Enugu', 'Nsukka', 'Enugu-Ezike', 'Oji River'],
+      'Gombe': ['Gombe', 'Bajoga', 'Deba', 'Nafada'],
+      'Imo': ['Owerri', 'Okigwe', 'Isiala Ngwa', 'Orlu'],
+      'Jigawa': ['Dutse', 'Hadejia', 'Kazaure', 'Katagum'],
+      'Kaduna': ['Kaduna', 'Zaria', 'Kafanchan', 'Saminaka'],
+      'Kano': ['Kano', 'Kano', 'Tarauni', 'Dawakin Kudu'],
+      'Katsina': ['Katsina', 'Kastina-Ala', 'Malumfashi', 'Daura'],
+      'Kebbi': ['Birnin Kebbi', 'Argungu', 'Yauri', 'Jega'],
+      'Kogi': ['Lokoja', 'Okene', 'Idah', 'Ogaminana'],
+      'Kwara': ['Ilorin', 'Offa', 'Kwara', 'Omu-Aran'],
+      'Lagos': ['Lagos', 'Ikeja', 'Lekki', 'Ikoyi'],
+      'Nasarawa': ['Lafia', 'Keffi', 'Nasarawa', 'Doma'],
+      'Niger': ['Minna', 'Suleja', 'Bida', 'Kontagora'],
+      'Ogun': ['Abeokuta', 'Ijebu-Ode', 'Sagamu', 'Ilaro'],
+      'Ondo': ['Akure', 'Owo', 'Ondo', 'Ikare'],
+      'Osun': ['Osogbo', 'Ilesha', 'Iwopin', 'Iwo'],
+      'Oyo': ['Ibadan', 'Ogbomosho', 'Oyo', 'Seyi'],
+      'Plateau': ['Jos', 'Bukuru', 'Pankshin', 'Shendam'],
+      'Rivers': ['Port Harcourt', 'Obio-Akpor', 'Bonny', 'Okrika'],
+      'Sokoto': ['Sokoto', 'Gusau', 'Tambuwal', 'Illela'],
+      'Taraba': ['Jalingo', 'Takum', 'Wukari', 'Zing'],
+      'Yobe': ['Damaturu', 'Potiskum', 'Gashua', 'Nguru'],
+      'Zamfara': ['Gusau', 'Kaura Namoda', 'Talika', 'Bakura'],
+      'Federal Capital Territory': ['Abuja', 'Mabushi', 'Garki', 'Lugbe']
+    };
+
+    function initializeStateCity() {
+      const stateSelect = document.getElementById('paymentState');
+
+      if (!stateSelect) return;
+
+      Object.keys(nigerianStatesAndCities).sort().forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        stateSelect.appendChild(option);
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeStateCity);
+    } else {
+      initializeStateCity();
+    }
+  </script>
 </body>
 </html>

