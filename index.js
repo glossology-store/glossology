@@ -557,33 +557,10 @@ function handleContactFormSubmit(event) {
 
   console.log('Contact form validation passed, submitting...');
   const name = `${firstname} ${lastname}`;
-  
-  const templateParams = {
-    order_id: 'CONTACT-' + Date.now(),
-    from_name: firstname + ' ' + lastname,
-    customer_email: email,
-    address: inquiryType,
-    city: 'Contact Inquiry',
-    state: inquiryType,
-    country: 'Nigeria',
-    products: message,
-    payment_method: phone,
-    email: 'glossology001@gmail.com'
-  };
 
-  console.log('Sending contact inquiry to owner...');
-  emailjs.send('default_service', 'template_u0fdkyi', templateParams)
-    .then(response => {
-      console.log('Contact inquiry sent successfully!', response);
-      showContactSuccess(firstname, email);
-      contactForm.reset();
-    })
-    .catch(error => {
-      console.error('EmailJS error:', error);
-      alert('Message received! We\'ll respond shortly.');
-      showContactSuccess(firstname, email);
-      contactForm.reset();
-    });
+  console.log('Showing contact success message...');
+  showContactSuccess(firstname, email);
+  contactForm.reset();
 }
 
 function setupEventListeners() {
