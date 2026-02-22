@@ -457,6 +457,7 @@ ${screenshotFileName}
       country: 'Nigeria',
       payment_method: paymentMethod,
       products: productsList,
+      product_total: `₦${total.toLocaleString()}`,
       payment_screenshot: screenshotFileName,
       email: email  // Send to customer
     };
@@ -481,38 +482,20 @@ ${screenshotFileName}
     };
 
     console.log('Sending customer confirmation email...');
-    emailjs.send('default_service', 'template_p0romb1', customerEmailParams)
+    emailjs.send('service_8962v97', 'template_p0romb1', customerEmailParams)
       .then(response => {
         console.log('✓ Customer confirmation email sent!', response);
         
         // Send invoice email to customer
         sendInvoiceEmail(orderId, name, email, address, city, state, productsList, total, mobileNumber, deliveryTimeframe);
         
-        // After customer email succeeds, send owner notification
         console.log('Sending business owner notification email...');
-        emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
-          .then(ownerResponse => {
-            console.log('✓ Owner notification email sent!', ownerResponse);
-            handlePaymentSuccess(paymentForm, name, email, total);
-          })
-          .catch(ownerError => {
-            console.error('Owner email error:', ownerError);
-            handlePaymentSuccess(paymentForm, name, email, total);
-          });
+        emailjs.send('service_8962v97', 'template_1j0y09w', ownerEmailParams)
       })
       .catch(error => {
         console.error('Customer email error:', error);
-        // Still try to send owner email even if customer email fails
         console.log('Attempting to send owner notification...');
-        emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
-          .then(ownerResponse => {
-            console.log('✓ Owner notification email sent!', ownerResponse);
-            handlePaymentSuccess(paymentForm, name, email, total);
-          })
-          .catch(ownerError => {
-            console.error('Owner email also failed:', ownerError);
-            handlePaymentSuccess(paymentForm, name, email, total);
-          });
+        emailjs.send('service_8962v97', 'template_1j0y09w', ownerEmailParams)
       });
   };
   
@@ -544,7 +527,7 @@ function sendInvoiceEmail(orderId, name, email, address, city, state, products, 
   };
 
   console.log('Sending order confirmation email...');
-  emailjs.send('default_service', 'template_invoice', invoiceEmailParams)
+  emailjs.send('service_8962v97', 'template_invoice', invoiceEmailParams)
     .then(response => {
       console.log('✓ Order confirmation email sent successfully!', response);
     })
@@ -621,7 +604,7 @@ function handleContactFormSubmit(event) {
   };
 
   console.log('Sending contact email via EmailJS...');
-  emailjs.send('default_service', 'template_p0romb1', templateParams)
+  emailjs.send('service_8962v97', 'template_p0romb1', templateParams)
     .then(response => {
       console.log('Contact email sent successfully!', response);
       showContactSuccess(firstname, email);
