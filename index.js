@@ -1,6 +1,6 @@
 // EmailJS Configuration
 console.log('🟢 index.js loaded - starting initialization');
-emailjs.init('fnr58NGwdArmPUBPU');
+emailjs.init('sO93qHilGQz2wafjd');
 console.log('🟢 EmailJS initialized');
 
 // Product database
@@ -419,6 +419,8 @@ function handlePaymentFormSubmit(event) {
   reader.onload = function(event) {
     const base64Screenshot = event.target.result;
     
+    console.log('Screenshot converted to Base64, preparing emails...');
+    
     // Format order details for business owner email
     const orderDetailsForOwner = `
 Customer Name: ${name}
@@ -455,14 +457,16 @@ ${screenshotFileName}
       city: city,
       state: state,
       country: 'Nigeria',
+      invoice_date: new Date().toLocaleDateString(),
+      mobile_number: mobileNumber,
       payment_method: paymentMethod,
       products: productsList,
       product_total: `₦${total.toLocaleString()}`,
-      payment_screenshot: screenshotFileName,
+      delivery_timeframe: deliveryTimeframe,
       email: email  // Send to customer
     };
 
-    // Email 2: Business Owner Notification (with Base64 screenshot)
+    // Email 2: Business Owner Notification
     const ownerEmailParams = {
       order_id: orderId,
       from_name: name,
@@ -472,34 +476,64 @@ ${screenshotFileName}
       city: city,
       state: state,
       country: 'Nigeria',
+      invoice_date: new Date().toLocaleDateString(),
       delivery_timeframe: deliveryTimeframe,
       payment_method: paymentMethod,
       products: productsList,
       total_amount: `₦${total.toLocaleString()}`,
-      payment_screenshot_base64: base64Screenshot,
-      email: 'glossology001@gmail.com',  // Send to business owner
-      order_details: orderDetailsForOwner
+      email: 'glossology001@gmail.com'  // Will be used by {{email}} in template To field
     };
 
+    console.log('Owner email params:', ownerEmailParams);
     console.log('Sending customer confirmation email...');
-    emailjs.send('service_8962v97', 'template_p0romb1', customerEmailParams)
+    
+    emailjs.send('service_hbr03kb', 'template_p0romb1', customerEmailParams)
       .then(response => {
         console.log('✓ Customer confirmation email sent!', response);
         
         // Send invoice email to customer
         sendInvoiceEmail(orderId, name, email, address, city, state, productsList, total, mobileNumber, deliveryTimeframe);
         
+        // After customer email succeeds, send owner notification
         console.log('Sending business owner notification email...');
-        emailjs.send('service_8962v97', 'template_1j0y09w', ownerEmailParams)
+        console.log('Service: default_service, Template: template_u0fdkyi');
+        
+        emailjs.send('service_hbr03kb', 'template_u0fdkyi', ownerEmailParams)
+          .then(ownerResponse => {
+            console.log('✓ Owner notification email sent!', ownerResponse);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          })
+          .catch(ownerError => {
+            console.error('❌ Owner email error:', ownerError);
+            console.error('Error details:', ownerError.status, ownerError.text);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          });
       })
       .catch(error => {
-        console.error('Customer email error:', error);
-        console.log('Attempting to send owner notification...');
-        emailjs.send('service_8962v97', 'template_1j0y09w', ownerEmailParams)
+        console.error('❌ Customer email error:', error);
+        // Still try to send owner email even if customer email fails
+        console.log('Attempting to send owner notification despite customer email failure...');
+        
+        emailjs.send('service_hbr03kb', 'template_u0fdkyi', ownerEmailParams)
+          .then(ownerResponse => {
+            console.log('✓ Owner notification email sent!', ownerResponse);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          })
+          .catch(ownerError => {
+            console.error('❌ Owner email also failed:', ownerError);
+            console.error('Error details:', ownerError.status, ownerError.text);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          });
       });
   };
   
+  reader.onerror = function(error) {
+    console.error('❌ Error reading file:', error);
+    alert('Error reading payment screenshot. Please try again.');
+  };
+  
   // Start reading the file as Base64
+  console.log('Starting to read screenshot file...');
   reader.readAsDataURL(screenshotFile);
 }
 
@@ -527,7 +561,7 @@ function sendInvoiceEmail(orderId, name, email, address, city, state, products, 
   };
 
   console.log('Sending order confirmation email...');
-  emailjs.send('service_8962v97', 'template_invoice', invoiceEmailParams)
+  emailjs.send('service_hbr03kb', 'template_invoice', invoiceEmailParams)
     .then(response => {
       console.log('✓ Order confirmation email sent successfully!', response);
     })
@@ -604,7 +638,7 @@ function handleContactFormSubmit(event) {
   };
 
   console.log('Sending contact email via EmailJS...');
-  emailjs.send('service_8962v97', 'template_p0romb1', templateParams)
+  emailjs.send('service_hbr03kb', 'template_p0romb1', templateParams)
     .then(response => {
       console.log('Contact email sent successfully!', response);
       showContactSuccess(firstname, email);
@@ -785,26 +819,39 @@ function handlePaymentSuccess(paymentForm, name, email, total) {
 // Show payment success message
 function showPaymentSuccess(name, email, total) {
   const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.style.display = 'block';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  `;
+  
   modal.innerHTML = `
-    <div class="modal-content">
+    <div class="modal-content" style="background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
       <h2 style="color: #c31667; text-align: center; margin-bottom: 1rem;">✓ Payment Received!</h2>
       <div style="text-align: center; line-height: 1.8;">
         <p><strong>Thank you for your purchase, ${name}!</strong></p>
         <p>Your payment proof has been submitted successfully.</p>
         <p style="margin-top: 1.5rem; font-size: 0.95rem;">
-          <strong>Amount:</strong> ₦${total.toFixed(2)}<br>
+          <strong>Amount:</strong> ₦${total.toLocaleString()}<br>
           <strong>Confirmation Email:</strong> ${email}
         </p>
         <p style="margin-top: 1.5rem; color: #6b2d4a; font-size: 0.9rem;">
-          We'll verify your payment and contact you within 24 hours to confirm your order and arrange shipping.
+          We'll contact you via SMS or WhatsApp within 24 hours with your shipping quotation. Keep your phone ready!
         </p>
-        <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="window.location.href='index.html'">Close</button>
+        <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="this.closest('.modal-content').parentElement.remove(); window.location.href='index.html'">Close</button>
       </div>
     </div>
   `;
+  
   document.body.appendChild(modal);
+  console.log('✓ Payment success modal shown');
 }
 
 // Show contact success message
