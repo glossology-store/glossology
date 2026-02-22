@@ -371,6 +371,12 @@ function handlePaymentFormSubmit(event) {
     alert('Please enter a valid email');
     return;
   }
+
+  const mobileNumber = paymentForm.querySelector('input[name="mobileNumber"]')?.value.trim() || '';
+  if (!mobileNumber) {
+    alert('Please enter your mobile number');
+    return;
+  }
   
   if (!address || address.length < 3) {
     alert('Please enter your address');
@@ -386,6 +392,9 @@ function handlePaymentFormSubmit(event) {
     alert('Please select a state');
     return;
   }
+
+  // Get delivery timeframe based on state
+  const deliveryTimeframe = state === 'Lagos' ? '2-3 Working Days' : '5-7 Working Days (via GIG Logistics)';
   
   if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
     alert('Please upload a payment screenshot');
@@ -403,16 +412,27 @@ function handlePaymentFormSubmit(event) {
   // Get screenshot filename
   const screenshotFileName = fileInput.files[0]?.name || 'Unknown file';
   
-  // Format order details for business owner email
-  const orderDetailsForOwner = `
+  // Convert screenshot to Base64
+  const screenshotFile = fileInput.files[0];
+  const reader = new FileReader();
+  
+  reader.onload = function(event) {
+    const base64Screenshot = event.target.result;
+    
+    // Format order details for business owner email
+    const orderDetailsForOwner = `
 Customer Name: ${name}
 Email: ${email}
+Phone: ${mobileNumber}
 Order ID: ${orderId}
 Date: ${new Date().toLocaleDateString()}
 
 DELIVERY ADDRESS:
 ${address}
 ${city}, ${state}, Nigeria
+
+DELIVERY TIMEFRAME:
+${deliveryTimeframe}
 
 ORDER ITEMS:
 ${productsList}
@@ -426,67 +446,110 @@ PAYMENT SCREENSHOT:
 ${screenshotFileName}
 `;
 
-  // Email 1: Customer Confirmation
-  const customerEmailParams = {
+    // Email 1: Customer Confirmation
+    const customerEmailParams = {
+      order_id: orderId,
+      from_name: name,
+      customer_email: email,
+      address: address,
+      city: city,
+      state: state,
+      country: 'Nigeria',
+      payment_method: paymentMethod,
+      products: productsList,
+      payment_screenshot: screenshotFileName,
+      email: email  // Send to customer
+    };
+
+    // Email 2: Business Owner Notification (with Base64 screenshot)
+    const ownerEmailParams = {
+      order_id: orderId,
+      from_name: name,
+      customer_email: email,
+      mobile_number: mobileNumber,
+      address: address,
+      city: city,
+      state: state,
+      country: 'Nigeria',
+      delivery_timeframe: deliveryTimeframe,
+      payment_method: paymentMethod,
+      products: productsList,
+      total_amount: `₦${total.toLocaleString()}`,
+      payment_screenshot_base64: base64Screenshot,
+      email: 'glossology001@gmail.com',  // Send to business owner
+      order_details: orderDetailsForOwner
+    };
+
+    console.log('Sending customer confirmation email...');
+    emailjs.send('default_service', 'template_p0romb1', customerEmailParams)
+      .then(response => {
+        console.log('✓ Customer confirmation email sent!', response);
+        
+        // Send invoice email to customer
+        sendInvoiceEmail(orderId, name, email, address, city, state, productsList, total, mobileNumber, deliveryTimeframe);
+        
+        // After customer email succeeds, send owner notification
+        console.log('Sending business owner notification email...');
+        emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
+          .then(ownerResponse => {
+            console.log('✓ Owner notification email sent!', ownerResponse);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          })
+          .catch(ownerError => {
+            console.error('Owner email error:', ownerError);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          });
+      })
+      .catch(error => {
+        console.error('Customer email error:', error);
+        // Still try to send owner email even if customer email fails
+        console.log('Attempting to send owner notification...');
+        emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
+          .then(ownerResponse => {
+            console.log('✓ Owner notification email sent!', ownerResponse);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          })
+          .catch(ownerError => {
+            console.error('Owner email also failed:', ownerError);
+            handlePaymentSuccess(paymentForm, name, email, total);
+          });
+      });
+  };
+  
+  // Start reading the file as Base64
+  reader.readAsDataURL(screenshotFile);
+}
+
+// Send Invoice Email
+function sendInvoiceEmail(orderId, name, email, address, city, state, products, total, mobileNumber, deliveryTimeframe) {
+  console.log('Preparing invoice email for order:', orderId);
+  
+  // Format invoice details
+  const invoiceDate = new Date().toLocaleDateString();
+  
+  const invoiceEmailParams = {
     order_id: orderId,
+    invoice_date: invoiceDate,
     from_name: name,
     customer_email: email,
+    mobile_number: mobileNumber,
     address: address,
     city: city,
     state: state,
     country: 'Nigeria',
-    payment_method: paymentMethod,
-    products: productsList,
-    payment_screenshot: screenshotFileName,
+    products: products,
+    product_total: `₦${total.toLocaleString()}`,
+    delivery_timeframe: deliveryTimeframe,
     email: email  // Send to customer
   };
 
-  // Email 2: Business Owner Notification
-  const ownerEmailParams = {
-    order_id: orderId,
-    from_name: name,
-    customer_email: email,
-    address: address,
-    city: city,
-    state: state,
-    country: 'Nigeria',
-    payment_method: paymentMethod,
-    products: productsList,
-    payment_screenshot: screenshotFileName,
-    email: 'glossology001@gmail.com',  // Send to business owner
-    order_details: orderDetailsForOwner
-  };
-
-  console.log('Sending customer confirmation email...');
-  emailjs.send('default_service', 'template_p0romb1', customerEmailParams)
+  console.log('Sending order confirmation email...');
+  emailjs.send('default_service', 'template_invoice', invoiceEmailParams)
     .then(response => {
-      console.log('✓ Customer confirmation email sent!', response);
-      
-      // After customer email succeeds, send owner notification
-      console.log('Sending business owner notification email...');
-      emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
-        .then(ownerResponse => {
-          console.log('✓ Owner notification email sent!', ownerResponse);
-          handlePaymentSuccess(paymentForm, name, email, total);
-        })
-        .catch(ownerError => {
-          console.error('Owner email error:', ownerError);
-          handlePaymentSuccess(paymentForm, name, email, total);
-        });
+      console.log('✓ Order confirmation email sent successfully!', response);
     })
     .catch(error => {
-      console.error('Customer email error:', error);
-      // Still try to send owner email even if customer email fails
-      console.log('Attempting to send owner notification...');
-      emailjs.send('default_service', 'template_u0fdkyi', ownerEmailParams)
-        .then(ownerResponse => {
-          console.log('✓ Owner notification email sent!', ownerResponse);
-          handlePaymentSuccess(paymentForm, name, email, total);
-        })
-        .catch(ownerError => {
-          console.error('Owner email also failed:', ownerError);
-          handlePaymentSuccess(paymentForm, name, email, total);
-        });
+      console.error('Order confirmation email error:', error);
     });
 }
 
@@ -667,6 +730,24 @@ function setupEventListeners() {
       console.log('✓ Attaching submit listener to paymentForm');
       paymentForm.addEventListener('submit', handlePaymentFormSubmit);
       console.log('✓ Submit listener attached to paymentForm');
+      
+      // Add state change listener to update delivery timeframe
+      const stateSelect = paymentForm.querySelector('select[name="state"]');
+      if (stateSelect) {
+        stateSelect.addEventListener('change', (e) => {
+          const deliveryTimeframeField = document.getElementById('deliveryTimeframe');
+          if (deliveryTimeframeField) {
+            const selectedState = e.target.value;
+            if (selectedState === 'Lagos') {
+              deliveryTimeframeField.value = '🚚 Lagos Delivery - 2-3 Working Days';
+            } else if (selectedState) {
+              deliveryTimeframeField.value = `🚚 Interstate Delivery - 5-7 Working Days (${selectedState})`;
+            } else {
+              deliveryTimeframeField.value = '';
+            }
+          }
+        });
+      }
     }
   
   // Add contact form submit event listener

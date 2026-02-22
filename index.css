@@ -1649,6 +1649,7 @@ a:hover {
 
 .payment-form input[type="text"],
 .payment-form input[type="email"],
+.payment-form input[type="tel"],
 .payment-form select,
 .payment-form textarea {
   padding: 12px;
